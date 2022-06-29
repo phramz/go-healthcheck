@@ -1,0 +1,72 @@
+name: Release
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Tag and release new version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - uses: SOLIDSoftworks/semver-tags@1.0.3
+        id: semver
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag-prefix: "v"
+          default-version: "0.0.1"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: USERNAME
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}/go-healthcheck:${{ steps.semver.outputs.semantic-version }},ghcr.io/${{ github.repository }}/go-healthcheck:${{ steps.vars.outputs.sha_short }}
+          build-args: |
+            "BUILD_COMMIT=${{ github.sha }}"
+            "BUILD_VERSION=v${{ steps.semver.outputs.semantic-version }}"
+
+      - name: Tag commit
+        uses: tvdias/github-tagger@v0.0.2
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "${{ steps.semver.outputs.semantic-version }}"
+
+      - name: Fetch tag
+        uses: actions/checkout@v2
+        with:
+          ref: "v${{ steps.semver.outputs.semantic-version }}"
+
+      - name: Tag image version
+        uses: flownative/action-docker-publish-semver@master
+        with:
+          tag_ref: "v${{ steps.semver.outputs.semantic-version }}"
+          tag_latest: "yes"
+
+          source_image_name: ghcr.io/${{ github.repository }}/go-healthcheck
+          source_registry_username: USERNAME
+          source_registry_password: ${{ secrets.GITHUB_TOKEN }}
+          source_registry_endpoint: https://ghcr.io/v2/
+
+          target_image_name: ghcr.io/${{ github.repository }}/go-healthcheck
+          target_registry_username: USERNAME
+          target_registry_password: ${{ secrets.GITHUB_TOKEN }}
+          target_registry_endpoint: https://ghcr.io/v2/
