@@ -10,7 +10,7 @@ format:
 
 .PHONY: lint
 lint:
-	go vet ./...
+	docker run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint golangci-lint run
 
 .PHONY: test
 test:
