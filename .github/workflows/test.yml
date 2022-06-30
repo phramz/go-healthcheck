@@ -16,7 +16,7 @@ jobs:
     name: Unit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Dependencies
         run: go mod download
       - name: Unit test
@@ -29,7 +29,7 @@ jobs:
       - unit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build
         id: docker_build
         uses: docker/build-push-action@v2

@@ -9,7 +9,7 @@ jobs:
     name: Tag and release new version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
@@ -51,7 +51,7 @@ jobs:
           tag: "${{ steps.semver.outputs.semantic-version }}"
 
       - name: Fetch tag
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: "v${{ steps.semver.outputs.semantic-version }}"
 
