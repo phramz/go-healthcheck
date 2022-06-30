@@ -6,8 +6,11 @@ Tiny (< 9MB) CLI utility to perform health checks everywhere (container, local, 
 ## TL;DR
 
 ```shell
-# from source
-make build
+# via docker
+$ docker run --rm gregthebunny/go-healthcheck probe '{{ .Assert.HTTPStatusCode .HTTP.Handler "GET" "https://github.com" nil 200 }}'
+
+# ... or from source
+$ make build
 
 # check if github.com is up
 $ build/bin/healthcheck probe '{{ .Assert.HTTPStatusCode .HTTP.Handler "GET" "https://github.com" nil 200 }}'
@@ -39,6 +42,53 @@ GLOBAL OPTIONS:
    --timeout value        Maximum time in seconds after an unfinished probe will fail (default: 30) [$HC_TIMEOUT]
 ```
 
+### Use it for your Docker images
+
+```Dockerfile
+# docker build -t hc-echo-example .
+# docker run --name hc-echo-example --rm -p 5678:5678 hc-echo-example -text='my name is earl!'
+# open http://localhost:5678
+FROM hashicorp/http-echo
+
+COPY --from=gregthebunny/go-healthcheck /bin/healthcheck /bin/healthcheck
+
+ENV PROBE='{{ .Assert.HTTPBodyContains .HTTP.Handler "GET" "http://127.0.0.1:5678" nil "my name is earl!" }}'
+HEALTHCHECK --start-period=10s --retries=3 --timeout=10s --interval=10s \
+    CMD ["/bin/healthcheck", "probe", "$PROBE"]
+
+```
+
+Now build and run:
+```shell
+$ docker build -t hc-echo-example .
+$ docker run --name hc-echo-example --rm -p 5678:5678 hc-echo-example -text='my name is earl!'
+```
+`docker inspect --format "{{json .State.Health }}" hc-echo-example | jq`
+```json
+{
+  "Status": "healthy",
+  "FailingStreak": 0,
+  "Log": [
+    {
+      "Start": "2022-06-30T16:45:01.876566358Z",
+      "End": "2022-06-30T16:45:01.963092081Z",
+      "ExitCode": 0,
+      "Output": "time=\"16:45:01\" level=info msg=\"starting probe\" probe=p0 status=STARTED\ntime=\"16:45:01\" level=info msg=\"finished probe\" probe=p0 status=PASS\ntime=\"16:45:01\" level=info msg=\"1 of 1 probes passed 👍\"\n"
+    },
+    {
+      "Start": "2022-06-30T16:45:11.970180983Z",
+      "End": "2022-06-30T16:45:12.036572081Z",
+      "ExitCode": 0,
+      "Output": "time=\"16:45:12\" level=info msg=\"starting probe\" probe=p0 status=STARTED\ntime=\"16:45:12\" level=info msg=\"finished probe\" probe=p0 status=PASS\ntime=\"16:45:12\" level=info msg=\"1 of 1 probes passed 👍\"\n"
+    }
+  ]
+}
+```
+```shell
+$ docker ps
+CONTAINER ID   IMAGE                             COMMAND                  CREATED         STATUS                   PORTS                                                              NAMES
+f73899dc2b6c   hc-echo-example                   "/http-echo '-text=m…"   2 minutes ago   Up 2 minutes (healthy)   0.0.0.0:5678->5678/tcp                                             hc-echo-example
+```
 ### Examples
 
 ```shell
@@ -113,8 +163,8 @@ Here are some examples on how you can use assertions in probes:
 {{ .Assert.HTTPStatusCode .HTTP.Handler "GET" "http://google.com" nil }}
 {{ .Assert.HTTPError .HTTP.Handler "GET" "http://localhost:8080" nil }}
 {{ .Assert.HTTPSuccess .HTTP.Handler "GET" "http://localhost:8080" nil }}
-{{ .Assert.HTTPBodyContains .HTTP.Handler "GET" "http://localhost:8080" nil }}
-{{ .Assert.HTTPBodyNotContains .HTTP.Handler "GET" "http://localhost:8080" nil }}
+{{ .Assert.HTTPBodyContains .HTTP.Handler "GET" "http://localhost:8080" nil "hello world" }}
+{{ .Assert.HTTPBodyNotContains .HTTP.Handler "GET" "http://localhost:8080" nil "hello world" }}
 ```
 
 ## Credits
