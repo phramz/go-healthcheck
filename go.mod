@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
-	github.com/urfave/cli/v2 v2.17.1
+	github.com/urfave/cli/v2 v2.19.2
 )
 
 require (
