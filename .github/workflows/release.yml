@@ -9,15 +9,15 @@ jobs:
     name: Tag and release new version
     runs-on: ubuntu-latest
     environment:
-        name: release
+      name: release
     steps:
       - uses: actions/checkout@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-            username: ${{ secrets.DOCKERHUB_USERNAME }}
-            password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
@@ -41,7 +41,7 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-healthcheck:${{ steps.semver.outputs.semantic-version }},${{ secrets.DOCKERHUB_USERNAME }}/go-healthcheck
-          platforms: "linux/amd64,linux/arm64,linux/arm,darwin"
+          platforms: "linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8"
           build-args: |
             "BUILD_COMMIT=${{ github.sha }}"
             "BUILD_VERSION=v${{ steps.semver.outputs.semantic-version }}"
