@@ -41,6 +41,7 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-healthcheck:${{ steps.semver.outputs.semantic-version }},${{ secrets.DOCKERHUB_USERNAME }}/go-healthcheck
+          platforms: "linux/amd64,linux/arm64,linux/arm,darwin"
           build-args: |
             "BUILD_COMMIT=${{ github.sha }}"
             "BUILD_VERSION=v${{ steps.semver.outputs.semantic-version }}"
