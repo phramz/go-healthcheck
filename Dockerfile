@@ -9,7 +9,7 @@ RUN go mod download
 COPY . ./
 
 # see https://medium.com/@diogok/on-golang-static-binaries-cross-compiling-and-plugins-1aed33499671
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -ldflags '-w -extldflags "-static"' -o ./bin/healthcheck cmd/healthcheck.go
+RUN CGO_ENABLED=0 go build -tags netgo -ldflags '-w -extldflags "-static"' -o ./bin/healthcheck cmd/healthcheck.go
 
 # final layer
 FROM scratch as final
